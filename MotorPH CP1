@@ -1,0 +1,142 @@
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Date;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class MotorPH {
+public static void main(String[] args) {
+List<Employee> employees = readEmployeesFromExcel("Copy of MotorPH Employee Data.xlsx");
+for (Employee emp : employees) {
+System.out.println(emp.getDetails());
+}
+}
+
+public static List<Employee> readEmployeesFromExcel(String filePath) {
+List<Employee> employees = new ArrayList<>();
+try (FileInputStream fis = new FileInputStream(filePath);
+Workbook workbook = new XSSFWorkbook(fis)) {
+Sheet sheet = workbook.getSheetAt(0);
+for (int i = 1; i <= sheet.getLastRowNum(); i++) { 
+Row row = sheet.getRow(i);
+if (row == null) continue;
+Employee e = new Employee();
+e.employeeId = (int) row.getCell(0).getNumericCellValue();
+e.lastName = row.getCell(1).getStringCellValue();
+e.firstName = row.getCell(2).getStringCellValue();
+e.address = row.getCell(4).getStringCellValue();
+e.contactNumber = row.getCell(5).getStringCellValue();
+e.sssNumber = row.getCell(6).getStringCellValue();
+e.philHealthNumber = row.getCell(7).getStringCellValue();
+e.tinNumber = row.getCell(8).getStringCellValue();
+e.pagIbigNumber = row.getCell(9).getStringCellValue();
+e.position = row.getCell(11).getStringCellValue();
+e.basicSalary = row.getCell(13).getNumericCellValue();
+e.mealAllowance = row.getCell(14).getNumericCellValue();
+e.hourlyRate = row.getCell(16).getNumericCellValue();
+employees.add(e);
+}
+} catch (IOException e) {
+e.printStackTrace();
+}
+return employees;
+}
+}
+
+class LoginSession {
+int sessionId;
+int employeeId;
+Date loginTime;
+Date logoutTime;
+boolean isActive;
+
+void login() {
+isActive = true;
+loginTime = new Date();
+}
+
+void logout() {
+isActive = false;
+logoutTime = new Date();
+}
+}
+
+class Employee {
+int employeeId;
+String firstName;
+String lastName;
+String position;
+double basicSalary;
+double hourlyRate;
+String department;
+String contactNumber;
+String address;
+String sssNumber;
+String philHealthNumber;
+String tinNumber;
+String pagIbigNumber;
+double mealAllowance;
+
+double calculateSalary() {
+return basicSalary + mealAllowance;
+}
+
+String getDetails() {
+return firstName + " " + lastName + ", Position: " + position;
+}
+}
+
+class Attendance {
+int attendanceId;
+int employeeId;
+Date date;
+double hoursWorked;
+boolean isPresent;
+
+void markAttendance() {
+isPresent = true;
+date = new Date();
+}
+
+boolean getAttendance() {
+return isPresent;
+}
+}
+
+class Payroll {
+int payrollId;
+int employeeId;
+double grossSalary;
+double netSalary;
+double deductions;
+double allowances;
+double mealAllowance;
+
+double calculateDeductions() {
+return deductions;
+}
+
+double getTotalDeductions() {
+return deductions;
+}
+}
+
+class Deductions {
+int deductionId;
+int employeeId;
+double tax;
+double sss;
+double philHealth;
+double pagIbig;
+double totalDeductions;
+
+void generatePayroll() {
+totalDeductions = tax + sss + philHealth + pagIbig;
+}
+
+double calculateNetSalary() {
+return totalDeductions;
+}
+}
