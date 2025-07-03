@@ -1,0 +1,187 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
+
+public class MotorPH {
+public static void main(String[] args) {
+List<Employee> employees = readEmployeesFromExcel("Copy of MotorPH Employee Data.xlsx");
+Scanner scanner = new Scanner(System.in);
+
+while (true) {
+System.out.println("\n=== MotorPH Employee Menu ===");
+System.out.println("1. View all employees");
+System.out.println("2. View specific employee");
+System.out.println("3. View pay details for employee by month");
+System.out.println("0. Exit");
+System.out.print("Choose an option: ");
+int choice = scanner.nextInt();
+scanner.nextLine();
+
+switch (choice) {
+case 1 -> {
+for (Employee e : employees) {
+System.out.println(e.getDetails());
+}
+}
+case 2 -> {
+System.out.print("Enter Employee ID: ");
+int id = scanner.nextInt();
+scanner.nextLine();
+employees.stream().filter(e -> e.employeeId == id)
+.findFirst()
+.ifPresentOrElse(
+e -> System.out.println(e.getDetails()),
+() -> System.out.println("Employee not found."));
+}
+case 3 -> {
+System.out.print("Enter Employee ID: ");
+int id = scanner.nextInt();
+scanner.nextLine();
+System.out.print("Enter month: ");
+String month = scanner.nextLine();
+employees.stream().filter(e -> e.employeeId == id)
+.findFirst()
+.ifPresentOrElse(e -> {
+System.out.println("Pay details for " + e.getDetails());
+System.out.println("Month: " + month);
+System.out.println("Total Salary: " + e.calculateSalary());
+}, () -> System.out.println("Employee not found."));
+}
+case 0 -> {
+System.out.println("Exiting...");
+return;
+}
+default -> System.out.println("Invalid option.");
+}
+}
+}
+
+public static List<Employee> readEmployeesFromExcel(String filePath) {
+List<Employee> employees = new ArrayList<>();
+try (FileInputStream fis = new FileInputStream(filePath);
+Workbook workbook = new XSSFWorkbook(fis)) {
+Sheet sheet = workbook.getSheetAt(0);
+for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+Row row = sheet.getRow(i);
+if (row == null) continue;
+Employee e = new Employee();
+e.employeeId = (int) row.getCell(0).getNumericCellValue();
+e.lastName = row.getCell(1).getStringCellValue();
+e.firstName = row.getCell(2).getStringCellValue();
+e.address = row.getCell(4).getStringCellValue();
+e.contactNumber = row.getCell(5).getStringCellValue();
+e.sssNumber = row.getCell(6).getStringCellValue();
+e.philHealthNumber = row.getCell(7).getStringCellValue();
+e.tinNumber = row.getCell(8).getStringCellValue();
+e.pagIbigNumber = row.getCell(9).getStringCellValue();
+e.position = row.getCell(11).getStringCellValue();
+e.basicSalary = row.getCell(13).getNumericCellValue();
+e.mealAllowance = row.getCell(14).getNumericCellValue();
+e.hourlyRate = row.getCell(16).getNumericCellValue();
+employees.add(e);
+}
+} catch (IOException e) {
+e.printStackTrace();
+}
+return employees;
+}
+}
+
+class LoginSession {
+int sessionId;
+int employeeId;
+Date loginTime;
+Date logoutTime;
+boolean isActive;
+
+void login() {
+isActive = true;
+loginTime = new Date();
+}
+
+void logout() {
+isActive = false;
+logoutTime = new Date();
+}
+}
+
+class Employee {
+int employeeId;
+String firstName;
+String lastName;
+String position;
+double basicSalary;
+double hourlyRate;
+String department;
+String contactNumber;
+String address;
+String sssNumber;
+String philHealthNumber;
+String tinNumber;
+String pagIbigNumber;
+double mealAllowance;
+
+double calculateSalary() {
+return basicSalary + mealAllowance;
+}
+
+String getDetails() {
+return "ID: " + employeeId + ", Name: " + firstName + " " + lastName +
+, Position:  + position + ", Salary: " + calculateSalary();
+}
+}
+
+class Attendance {
+int attendanceId;
+int employeeId;
+Date date;
+double hoursWorked;
+boolean isPresent;
+
+void markAttendance() {
+isPresent = true;
+date = new Date();
+}
+
+boolean getAttendance() {
+return isPresent;
+}
+}
+
+class Payroll {
+int payrollId;
+int employeeId;
+double grossSalary;
+double netSalary;
+double deductions;
+double allowances;
+double mealAllowance;
+
+double calculateDeductions() {
+return deductions;
+}
+
+double getTotalDeductions() {
+return deductions;
+}
+}
+
+class Deductions {
+int deductionId;
+int employeeId;
+double tax;
+double sss;
+double philHealth;
+double pagIbig;
+double totalDeductions;
+
+void generatePayroll() {
+totalDeductions = tax + sss + philHealth + pagIbig;
+}
+
+double calculateNetSalary() {
+return totalDeductions;
+}
+}
