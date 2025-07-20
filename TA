@@ -1,0 +1,198 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.*;
+import java.util.*;
+
+public class MotorPH {
+    private static final String CSV_FILE = "MotorPH_Employees.csv";
+    private static final String USERS_FILE = "users.csv"; // New file for login credentials
+
+    public static void main(String[] args) {
+        List<Employee> employees = readEmployeesFromExcel("FILEPATH");
+        Scanner scanner = new Scanner(System.in);
+
+        // --- LOGIN FEATURE ---
+        if (!login(scanner)) {
+            System.out.println("Too many failed login attempts. Exiting...");
+            return;
+        }
+
+        while (true) {
+            System.out.println("\n=== MotorPH Employee Menu ===");
+            System.out.println("1. View all employees");
+            System.out.println("2. View specific employee");
+            System.out.println("3. View pay details for employee by month");
+            System.out.println("4. Add new employee and save to CSV");
+            System.out.println("0. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1 -> {
+                    for (Employee e : employees) {
+                        System.out.println(e.getDetails());
+                    }
+                }
+                case 2 -> {
+                    System.out.print("Enter Employee ID: ");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+                    employees.stream().filter(e -> e.employeeId == id)
+                        .findFirst()
+                        .ifPresentOrElse(
+                            e -> System.out.println(e.getDetails()),
+                            () -> System.out.println("Employee not found."));
+                }
+                case 3 -> {
+                    System.out.print("Enter Employee ID: ");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.print("Enter month: ");
+                    String month = scanner.nextLine();
+                    employees.stream().filter(e -> e.employeeId == id)
+                        .findFirst()
+                        .ifPresentOrElse(e -> {
+                            System.out.println("Pay details for " + e.getDetails());
+                            System.out.println("Month: " + month);
+                            System.out.println("Total Salary: " + e.calculateSalary());
+                        }, () -> System.out.println("Employee not found."));
+                }
+                case 4 -> {
+                    Employee e = new Employee();
+                    e.employeeId = employees.size() + 1;
+                    System.out.print("First Name: ");
+                    e.firstName = scanner.nextLine();
+                    System.out.print("Last Name: ");
+                    e.lastName = scanner.nextLine();
+                    System.out.print("Position: ");
+                    e.position = scanner.nextLine();
+                    System.out.print("Basic Salary: ");
+                    e.basicSalary = scanner.nextDouble();
+                    System.out.print("Hourly Rate: ");
+                    e.hourlyRate = scanner.nextDouble();
+                    scanner.nextLine();
+                    System.out.print("Department: ");
+                    e.department = scanner.nextLine();
+                    System.out.print("Phone: ");
+                    e.contactNumber = scanner.nextLine();
+                    System.out.print("Address: ");
+                    e.address = scanner.nextLine();
+                    System.out.print("SSS #: ");
+                    e.sssNumber = scanner.nextLine();
+                    System.out.print("PhilHealth #: ");
+                    e.philHealthNumber = scanner.nextLine();
+                    System.out.print("TIN #: ");
+                    e.tinNumber = scanner.nextLine();
+                    System.out.print("Pag-Ibig #: ");
+                    e.pagIbigNumber = scanner.nextLine();
+                    System.out.print("Meal Allowance: ");
+                    e.mealAllowance = scanner.nextDouble();
+                    scanner.nextLine();
+
+                    employees.add(e);
+                    saveEmployeeToCSV(e);
+                    System.out.println("New employee added and saved to CSV.");
+                }
+                case 0 -> {
+                    System.out.println("Exiting...");
+                    return;
+                }
+                default -> System.out.println("Invalid option.");
+            }
+        }
+    }
+
+    // --- LOGIN METHOD ---
+    public static boolean login(Scanner scanner) {
+        Map<String, String> credentials = loadUserCredentials();
+        int attempts = 0;
+        final int MAX_ATTEMPTS = 3;
+        while (attempts < MAX_ATTEMPTS) {
+            System.out.print("Username: ");
+            String username = scanner.nextLine();
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+
+            if (credentials.containsKey(username) && credentials.get(username).equals(password)) {
+                System.out.println("Login successful. Welcome, " + username + "!");
+                return true;
+            } else {
+                attempts++;
+                System.out.println("Invalid username or password. Attempts left: " + (MAX_ATTEMPTS - attempts));
+            }
+        }
+        return false;
+    }
+
+    // --- LOAD USER CREDENTIALS ---
+    public static Map<String, String> loadUserCredentials() {
+        Map<String, String> credentials = new HashMap<>();
+        File file = new File(USERS_FILE);
+        if (!file.exists()) {
+            // Create default admin if file is missing
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write("admin,admin123\n"); // default admin
+            } catch (IOException e) {
+                System.out.println("Could not create users file.");
+            }
+            credentials.put("admin", "admin123");
+            return credentials;
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(USERS_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    credentials.put(parts[0], parts[1]);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading users file: " + e.getMessage());
+        }
+        return credentials;
+    }
+
+    public static List<Employee> readEmployeesFromExcel(String filePath) {
+        List<Employee> employees = new ArrayList<>();
+        try (FileInputStream fis = new FileInputStream(filePath);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                Employee e = new Employee();
+                e.employeeId = (int) row.getCell(0).getNumericCellValue();
+                e.lastName = row.getCell(1).getStringCellValue();
+                e.firstName = row.getCell(2).getStringCellValue();
+                e.address = row.getCell(4).getStringCellValue();
+                e.contactNumber = row.getCell(5).getStringCellValue();
+                e.sssNumber = row.getCell(6).getStringCellValue();
+                e.philHealthNumber = row.getCell(7).getStringCellValue();
+                e.tinNumber = row.getCell(8).getStringCellValue();
+                e.pagIbigNumber = row.getCell(9).getStringCellValue();
+                e.position = row.getCell(11).getStringCellValue();
+                e.basicSalary = row.getCell(13).getNumericCellValue();
+                e.mealAllowance = row.getCell(14).getNumericCellValue();
+                e.hourlyRate = row.getCell(16).getNumericCellValue();
+                employees.add(e);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return employees;
+    }
+
+    public static void saveEmployeeToCSV(Employee e) {
+        try (FileWriter writer = new FileWriter(CSV_FILE, true)) {
+            writer.append(String.format("%d,%s,%s,%s,%.2f,%.2f,%s,%s,%s,%s,%s,%s,%s,%.2f\n",
+                e.employeeId, e.firstName, e.lastName, e.position,
+                e.basicSalary, e.hourlyRate, e.department, e.contactNumber,
+                e.address, e.sssNumber, e.philHealthNumber, e.tinNumber,
+                e.pagIbigNumber, e.mealAllowance));
+        } catch (IOException ex) {
+            System.out.println("Error writing to CSV file: " + ex.getMessage());
+        }
+    }
+}
